@@ -1,9 +1,3 @@
-/**
- * Implement Gatsby's Node APIs in this file.
- *
- * See: https://www.gatsbyjs.org/docs/node-apis/
- */
-
 const path = require('path');
 const _ = require('lodash');
 
@@ -45,30 +39,36 @@ exports.createPages = async ({ actions, graphql, reporter }) => {
   const posts = result.data.postsRemark.edges;
 
   posts.forEach(({ node }) => {
-    createPage({
-      path: node.frontmatter.slug,
-      component: postTemplate,
-      context: {},
-    });
+    if (node.frontmatter.slug) {
+      createPage({
+        path: node.frontmatter.slug,
+        component: postTemplate,
+        context: {},
+      });
+    } else {
+      reporter.warn(`Missing "slug" for a post`);
+    }
   });
 
   // Extract tag data from query
   const tags = result.data.tagsGroup.group;
   // Make tag pages
   tags.forEach(tag => {
-    createPage({
-      path: `/pensieve/tags/${_.kebabCase(tag.fieldValue)}/`,
-      component: tagTemplate,
-      context: {
-        tag: tag.fieldValue,
-      },
-    });
+    if (tag.fieldValue) {
+      createPage({
+        path: `/pensieve/tags/${_.kebabCase(tag.fieldValue)}/`,
+        component: tagTemplate,
+        context: {
+          tag: tag.fieldValue,
+        },
+      });
+    } else {
+      reporter.warn(`Tag group is missing "fieldValue"`);
+    }
   });
 };
 
-// https://www.gatsbyjs.org/docs/node-apis/#onCreateWebpackConfig
 exports.onCreateWebpackConfig = ({ stage, loaders, actions }) => {
-  // https://www.gatsbyjs.org/docs/debugging-html-builds/#fixing-third-party-modules
   if (stage === 'build-html') {
     actions.setWebpackConfig({
       module: {
